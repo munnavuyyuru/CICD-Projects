@@ -1,6 +1,6 @@
 # Hello Pipeline
 
-![CI](https://github.com/munnavuyyuru/hello-pipeline/actions/workflows/project-1-ci.yml/badge.svg)
+![CI](https://github.com/munnavuyyuru/CICD-Projects/actions/workflows/project-1-ci.yml/badge.svg)
 
 A hands-on CI/CD learning project — lint + test + coverage on every push and PR.
 
