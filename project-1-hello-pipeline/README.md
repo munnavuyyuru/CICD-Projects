@@ -1,6 +1,6 @@
 # Hello Pipeline
 
-![CI](https://github.com/YOUR_USERNAME/hello-pipeline/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/munnavuyyuru/hello-pipeline/actions/workflows/project-1-ci.yml/badge.svg)
 
 A hands-on CI/CD learning project — lint + test + coverage on every push and PR.
 
@@ -8,7 +8,7 @@ A hands-on CI/CD learning project — lint + test + coverage on every push and P
 
 - `app/` — a small Python package (calculator + statistics utilities)
 - `tests/` — pytest test suite with 100% coverage
-- `.github/workflows/ci.yml` — GitHub Actions pipeline
+- `.github/workflows/project-1-ci.yml` — GitHub Actions pipeline
 
 ## Pipeline Overview
 
