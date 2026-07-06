@@ -22,3 +22,13 @@ def test_median_even():
 
 def test_value_range():
     assert value_range([10, 2, 8]) == 8
+
+
+def test_median_empty_raises():
+    with pytest.raises(ValueError):
+        median([])
+
+
+def test_value_range_empty_raises():
+    with pytest.raises(ValueError):
+        value_range([])

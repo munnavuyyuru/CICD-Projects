@@ -1,28 +1,40 @@
 # Hello Pipeline
 
-A tiny calculator app used to learn CI/CD basics — lint + test on every push and PR.
+![CI](https://github.com/YOUR_USERNAME/hello-pipeline/actions/workflows/ci.yml/badge.svg)
 
-## Structure
+A hands-on CI/CD learning project — lint + test + coverage on every push and PR.
+
+## What This Repo Contains
+
+- `app/` — a small Python package (calculator + statistics utilities)
+- `tests/` — pytest test suite with 100% coverage
+- `.github/workflows/ci.yml` — GitHub Actions pipeline
+
+## Pipeline Overview
 
 ```
-hello-pipeline/
-├── app/
-│   ├── __init__.py
-│   └── calculator.py
-├── tests/
-│   ├── __init__.py
-│   └── test_calculator.py
-├── requirements.txt
-└── .flake8
+push / PR
+   │
+   ▼
+┌──────┐     ┌─────────────────┐
+│ lint │ ──► │ test (py 3.10)  │
+└──────┘     │ test (py 3.11)  │ ──► 📦 coverage artifacts
+             │ test (py 3.12)  │
+             └─────────────────┘
 ```
 
-## Local setup
+- **Lint:** flake8
+- **Test:** pytest across Python 3.10 / 3.11 / 3.12 (matrix)
+- **Cache:** pip dependencies, keyed on `requirements.txt`
+- **Artifacts:** HTML coverage reports (7-day retention)
+
+## Run Locally
 
 ```bash
-python -m venv venv
-source venv/bin/activate        # Windows: venv\Scripts\activate
+python -m venv venv && venv\Scripts\activate
 pip install -r requirements.txt
 
-flake8 .                        # lint — should print nothing (= clean)
-pytest -v                       # tests — should show 4 passed
+flake8 .                                    # lint
+pytest -v --cov --cov-report=term           # test + coverage
+pytest -v --cov --cov-report=html           # HTML coverage report
 ```
