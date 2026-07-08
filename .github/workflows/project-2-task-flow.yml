@@ -2,12 +2,12 @@ name: Task Flow
 
 on:
   push:
-    branches: [main, "*"]
+    branches: ["**"]
     paths:
       - "project-2-task-flow/**"
       - ".github/workflows/project-2-task-flow.yml"
   pull_request:
-    branches: [main, "*"]
+    branches: ["**"]
     paths:
       - "project-2-task-flow/**"
       - ".github/workflows/project-2-task-flow.yml"
@@ -25,6 +25,7 @@ jobs:
         with:
           node-version: "24"
           cache: "npm"
+          cache-dependency-path: project-2-task-flow/package-lock.json
       - run: npm ci
       - run: npm run typecheck
       - run: npm run lint
@@ -38,5 +39,6 @@ jobs:
         with:
           node-version: "24"
           cache: "npm"
+          cache-dependency-path: project-2-task-flow/package-lock.json
       - run: npm ci
       - run: npm test
