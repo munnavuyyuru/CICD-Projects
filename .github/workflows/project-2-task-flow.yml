@@ -1,0 +1,42 @@
+name: Task Flow
+
+on:
+  push:
+    branches: [main, "*"]
+    paths:
+      - "project-2-task-flow/**"
+      - ".github/workflows/project-2-task-flow.yml"
+  pull_request:
+    branches: [main, "*"]
+    paths:
+      - "project-2-task-flow/**"
+      - ".github/workflows/project-2-task-flow.yml"
+
+defaults:
+  run:
+    working-directory: project-2-task-flow
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+
+  test:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - run: npm ci
+      - run: npm test
