@@ -1,0 +1,18 @@
+*.d.ts
+*.d.ts.map
+*.js.map
+node_modules
+dist
+.env
+.env.local
+.env.*.local
+*.log
+coverage
+.supabase
+supabase/.temp/
+playwright-report
+test-results
+.DS_Store
+*.tsbuildinfo
+verify.sql
+TaskFlow_ Production App with Agents — Full End-to-End Guide.md

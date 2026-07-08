@@ -1,0 +1,152 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-void-black: #0a0a0f;
+  --color-abyss: #0d0d1a;
+  --color-deep-purple: #1a1a2e;
+  --color-neon-cyan: #00ffcc;
+  --color-neon-magenta: #ff006e;
+  --color-terminal-green: #39ff14;
+  --color-electric-blue: #0077ff;
+  --color-synthwave-orange: #ff7700;
+  --color-grid-line: #1e1e3a;
+  --color-data-stream: rgba(0, 255, 204, 0.15);
+
+  --font-mono: 'JetBrains Mono', monospace;
+  --font-display: 'Orbitron', sans-serif;
+
+  --animate-glitch: glitch cubic-bezier(0.25, 0.46, 0.45, 0.94) both infinite;
+  --animate-scanline: scanline 8s linear infinite;
+  --animate-flicker: flicker 1.5s infinite alternate;
+  --animate-slide-up: slide-up 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-hex-rotate: hexRotate 60s linear infinite;
+  --animate-pulse-glow: pulse-glow 2s ease-in-out infinite alternate;
+
+  @keyframes glitch {
+    0% { transform: translate(0); }
+    20% { transform: translate(-3px, 2px); }
+    40% { transform: translate(3px, -2px); }
+    60% { transform: translate(-2px, 1px); }
+    80% { transform: translate(2px, -1px); }
+    100% { transform: translate(0); }
+  }
+
+  @keyframes scanline {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(100vh); }
+  }
+
+  @keyframes flicker {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
+  }
+
+  @keyframes slide-up {
+    0% { opacity: 0; transform: translateY(20px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes hexRotate {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  @keyframes pulse-glow {
+    0% { box-shadow: 0 0 5px var(--color-neon-cyan), 0 0 10px var(--color-neon-cyan); }
+    100% { box-shadow: 0 0 15px var(--color-neon-cyan), 0 0 30px var(--color-neon-cyan), 0 0 45px var(--color-neon-cyan); }
+  }
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--color-void-black);
+    color: var(--color-neon-cyan);
+    font-family: var(--font-mono);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  ::selection {
+    background-color: var(--color-neon-cyan);
+    color: var(--color-void-black);
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--color-abyss);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-neon-cyan);
+    border-radius: 3px;
+  }
+}
+
+@utility neon-border {
+  border: 1px solid var(--color-neon-cyan);
+  box-shadow:
+    0 0 5px var(--color-neon-cyan),
+    inset 0 0 5px rgba(0, 255, 204, 0.1);
+}
+
+@utility neon-border-magenta {
+  border: 1px solid var(--color-neon-magenta);
+  box-shadow:
+    0 0 5px var(--color-neon-magenta),
+    inset 0 0 5px rgba(255, 0, 110, 0.1);
+}
+
+@utility neon-glow {
+  text-shadow: 0 0 5px var(--color-neon-cyan), 0 0 10px var(--color-neon-cyan);
+}
+
+@utility neon-glow-magenta {
+  text-shadow: 0 0 5px var(--color-neon-magenta), 0 0 10px var(--color-neon-magenta);
+}
+
+@utility terminal-box {
+  background: var(--color-abyss);
+  border: 1px solid var(--color-grid-line);
+  border-radius: 4px;
+  padding: 1rem;
+}
+
+@utility glass-panel {
+  background: rgba(13, 13, 26, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 255, 204, 0.2);
+  border-radius: 8px;
+}
+
+@utility data-grid-bg {
+  background-image:
+    linear-gradient(rgba(0, 255, 204, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 255, 204, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+@utility crt-effect {
+  position: relative;
+  overflow: hidden;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, transparent 50%, rgba(0, 0, 0, 0.06) 50%);
+    background-size: 100% 4px;
+    pointer-events: none;
+    z-index: 10;
+  }
+}
