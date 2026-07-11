@@ -33,6 +33,16 @@ export async function createProject(
     .single();
 
   if (!data) throw new Error('Failed to create project');
+
+  const { error: memberError } = await supabase.from('project_members').insert({
+    project_id: data.id,
+    user_id: userId,
+    role: 'owner',
+    invited_by: userId,
+  });
+
+  if (memberError) throw new Error('Failed to add owner to project');
+
   return data as Project;
 }
 

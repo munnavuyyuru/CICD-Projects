@@ -5,6 +5,7 @@ import type { HealthResponse } from '@taskflow/shared';
 import profileRoutes from './routes/profiles';
 import projectRoutes from './routes/projects';
 import taskRoutes from './routes/tasks';
+import memberRoutes from './routes/members';
 
 const app = express();
 
@@ -13,6 +14,7 @@ app.use(express.json());
 
 app.use('/api/profiles', profileRoutes);
 app.use('/api/projects', projectRoutes);
+app.use('/api/projects', memberRoutes);
 app.use('/api/tasks', taskRoutes);
 
 app.get('/health', (_req, res) => {
