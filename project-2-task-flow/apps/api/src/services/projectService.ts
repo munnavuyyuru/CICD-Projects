@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
 import type { Project } from '@taskflow/shared';
+import { getMemberRole } from './memberService';
 
 export async function getProjects(userId: string): Promise<Project[]> {
   const { data } = await supabase
@@ -51,13 +52,8 @@ export async function updateProject(
   userId: string,
   input: { name?: string; description?: string | null },
 ): Promise<Project | null> {
-  const { data: existing } = await supabase
-    .from('projects')
-    .select('owner_id')
-    .eq('id', projectId)
-    .single();
-
-  if (!existing || existing.owner_id !== userId) return null;
+  const role = await getMemberRole(projectId, userId);
+  if (role !== 'owner') return null;
 
   const { data } = await supabase
     .from('projects')
@@ -70,13 +66,8 @@ export async function updateProject(
 }
 
 export async function deleteProject(projectId: string, userId: string): Promise<boolean> {
-  const { data: existing } = await supabase
-    .from('projects')
-    .select('owner_id')
-    .eq('id', projectId)
-    .single();
-
-  if (!existing || existing.owner_id !== userId) return false;
+  const role = await getMemberRole(projectId, userId);
+  if (role !== 'owner') return false;
 
   const { error } = await supabase
     .from('projects')

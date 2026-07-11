@@ -147,7 +147,9 @@ describe('PATCH /api/projects/:id', () => {
       .mockReturnValueOnce({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({ data: { owner_id: USER_ID }, error: null }),
+            eq: vi.fn().mockReturnValue({
+              maybeSingle: vi.fn().mockResolvedValue({ data: { role: 'owner' }, error: null }),
+            }),
           }),
         }),
       })
@@ -174,7 +176,9 @@ describe('PATCH /api/projects/:id', () => {
     mockFrom.mockReturnValue({
       select: vi.fn().mockReturnValue({
         eq: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({ data: { owner_id: 'other-user' }, error: null }),
+          eq: vi.fn().mockReturnValue({
+            maybeSingle: vi.fn().mockResolvedValue({ data: { role: 'member' }, error: null }),
+          }),
         }),
       }),
     });
@@ -194,7 +198,9 @@ describe('DELETE /api/projects/:id', () => {
       .mockReturnValueOnce({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({ data: { owner_id: USER_ID }, error: null }),
+            eq: vi.fn().mockReturnValue({
+              maybeSingle: vi.fn().mockResolvedValue({ data: { role: 'owner' }, error: null }),
+            }),
           }),
         }),
       })
@@ -213,7 +219,9 @@ describe('DELETE /api/projects/:id', () => {
     mockFrom.mockReturnValue({
       select: vi.fn().mockReturnValue({
         eq: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({ data: { owner_id: 'other-user' }, error: null }),
+          eq: vi.fn().mockReturnValue({
+            maybeSingle: vi.fn().mockResolvedValue({ data: { role: 'member' }, error: null }),
+          }),
         }),
       }),
     });

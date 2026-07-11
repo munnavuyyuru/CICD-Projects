@@ -4,7 +4,15 @@ import { apiClient } from '../lib/api';
 import { useAuth } from '../hooks/useAuth';
 import { HexGrid } from '../components/ui/HexGrid';
 import { NeonCard } from '../components/ui/NeonCard';
-import type { Project, Task } from '@taskflow/shared';
+import type { Project, Task, MemberRole } from '@taskflow/shared';
+
+interface MemberWithDisplayName {
+  project_id: string;
+  user_id: string;
+  role: MemberRole;
+  created_at: string;
+  display_name: string;
+}
 
 const STATUS_LABELS: Record<string, string> = {
   todo: 'TODO',
@@ -34,16 +42,24 @@ export function ProjectDetailPage() {
   const [loading, setLoading] = useState(true);
   const [newTitle, setNewTitle] = useState('');
   const [error, setError] = useState('');
+  const [members, setMembers] = useState<MemberWithDisplayName[]>([]);
+  const [newMemberId, setNewMemberId] = useState('');
+  const [newMemberRole, setNewMemberRole] = useState<MemberRole>('member');
+
+  const currentUserRole = members.find((m) => m.user_id === (user?.id ?? ''))?.role ?? null;
+  const isOwner = currentUserRole === 'owner';
 
   const fetchData = useCallback(async () => {
     if (!id) return;
     try {
-      const [projectData, tasksData] = await Promise.all([
+      const [projectData, tasksData, membersData] = await Promise.all([
         apiClient<Project>(`/api/projects/${id}`),
         apiClient<Task[]>(`/api/tasks/project/${id}`),
+        apiClient<MemberWithDisplayName[]>(`/api/projects/${id}/members`),
       ]);
       setProject(projectData);
       setTasks(tasksData);
+      setMembers(membersData);
     } catch {
       setError('Failed to load project');
     } finally {
@@ -87,6 +103,47 @@ export function ProjectDetailPage() {
     try {
       await apiClient(`/api/tasks/${taskId}`, { method: 'DELETE' });
       setTasks((prev) => prev.filter((t) => t.id !== taskId));
+    } catch {
+      // ignore
+    }
+  };
+
+  const handleAddMember = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMemberId.trim() || !id) return;
+    try {
+      await apiClient(`/api/projects/${id}/members`, {
+        method: 'POST',
+        body: JSON.stringify({ user_id: newMemberId.trim(), role: newMemberRole }),
+      });
+      const updated = await apiClient<MemberWithDisplayName[]>(`/api/projects/${id}/members`);
+      setMembers(updated);
+      setNewMemberId('');
+      setNewMemberRole('member');
+    } catch {
+      // ignore
+    }
+  };
+
+  const handleUpdateMemberRole = async (userId: string, role: MemberRole) => {
+    if (!id) return;
+    try {
+      await apiClient(`/api/projects/${id}/members/${userId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ role }),
+      });
+      const updated = await apiClient<MemberWithDisplayName[]>(`/api/projects/${id}/members`);
+      setMembers(updated);
+    } catch {
+      // ignore
+    }
+  };
+
+  const handleRemoveMember = async (userId: string) => {
+    if (!id) return;
+    try {
+      await apiClient(`/api/projects/${id}/members/${userId}`, { method: 'DELETE' });
+      setMembers((prev) => prev.filter((m) => m.user_id !== userId));
     } catch {
       // ignore
     }
@@ -220,6 +277,84 @@ export function ProjectDetailPage() {
               </div>
             </NeonCard>
           ))}
+        </div>
+
+        <div className="mt-20">
+          <p className="text-neon-magenta text-xs tracking-[0.3em] uppercase font-display mb-6">
+            [ MEMBERS ]
+          </p>
+
+          {isOwner && (
+            <form onSubmit={handleAddMember} className="flex gap-3 mb-8">
+              <input
+                type="text"
+                value={newMemberId}
+                onChange={(e) => setNewMemberId(e.target.value)}
+                placeholder="User UUID..."
+                className="flex-1 bg-abyss border border-grid-line px-4 py-3 text-neon-cyan text-sm outline-none transition-colors focus:border-neon-cyan placeholder:text-grid-line"
+              />
+              <select
+                value={newMemberRole}
+                onChange={(e) => setNewMemberRole(e.target.value as MemberRole)}
+                className="bg-abyss border border-grid-line px-3 py-3 text-xs font-display tracking-wider uppercase text-neon-cyan outline-none cursor-pointer"
+              >
+                <option value="member">MEMBER</option>
+                <option value="owner">OWNER</option>
+              </select>
+              <button
+                type="submit"
+                disabled={!newMemberId.trim()}
+                className="neon-border bg-abyss px-6 py-3 font-display text-xs tracking-widest uppercase text-neon-cyan transition-all duration-300 hover:bg-neon-cyan hover:text-void-black disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                &gt; ADD
+              </button>
+            </form>
+          )}
+
+          {members.length === 0 && (
+            <div className="terminal-box text-center py-8">
+              <p className="text-grid-line text-sm tracking-wider">
+                {'// NO_MEMBERS'}
+              </p>
+            </div>
+          )}
+
+          <div className="space-y-2">
+            {members.map((member) => (
+              <NeonCard key={member.user_id} className="flex items-center gap-4">
+                <div className="flex-1 min-w-0">
+                  <p className="text-neon-cyan text-sm truncate">{member.display_name}</p>
+                  <p className={`text-xs font-display tracking-wider mt-0.5 ${member.role === 'owner' ? 'text-neon-magenta' : 'text-grid-line'}`}>
+                    {member.role === 'owner' ? '[ OWNER ]' : '[ MEMBER ]'}
+                  </p>
+                </div>
+
+                {isOwner && member.user_id !== user?.id && (
+                  <div className="flex items-center gap-2 shrink-0">
+                    <select
+                      value={member.role}
+                      onChange={(e) => handleUpdateMemberRole(member.user_id, e.target.value as MemberRole)}
+                      className="bg-abyss border border-grid-line px-2 py-1 text-xs font-display tracking-wider uppercase text-neon-cyan outline-none cursor-pointer"
+                    >
+                      <option value="member">MEMBER</option>
+                      <option value="owner">OWNER</option>
+                    </select>
+                    <button
+                      onClick={() => handleRemoveMember(member.user_id)}
+                      className="text-xs text-neon-magenta hover:text-terminal-green transition-colors"
+                      title="Remove member"
+                    >
+                      [X]
+                    </button>
+                  </div>
+                )}
+
+                {member.user_id === user?.id && (
+                  <span className="text-xs text-grid-line tracking-wider shrink-0">YOU</span>
+                )}
+              </NeonCard>
+            ))}
+          </div>
         </div>
       </section>
     </main>
