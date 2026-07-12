@@ -7,6 +7,7 @@ import projectRoutes from './routes/projects';
 import taskRoutes from './routes/tasks';
 import memberRoutes from './routes/members';
 import commentRoutes from './routes/comments';
+import dashboardRoutes from './routes/dashboard';
 
 const app = express();
 
@@ -18,6 +19,7 @@ app.use('/api/projects', projectRoutes);
 app.use('/api/projects', memberRoutes);
 app.use('/api', commentRoutes);
 app.use('/api/tasks', taskRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 app.get('/health', (_req, res) => {
   const body: HealthResponse = {
