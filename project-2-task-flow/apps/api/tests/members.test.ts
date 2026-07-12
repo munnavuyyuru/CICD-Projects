@@ -109,6 +109,9 @@ describe('POST /api/projects/:projectId/members', () => {
       .mockReturnValueOnce(mockMemberQuery(null))
       .mockReturnValueOnce({
         insert: vi.fn().mockResolvedValue({ error: null }),
+      })
+      .mockReturnValueOnce({
+        insert: vi.fn().mockResolvedValue({ error: null }),
       });
 
     const res = await request(setupApp())

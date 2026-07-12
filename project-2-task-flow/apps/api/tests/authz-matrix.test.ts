@@ -60,6 +60,9 @@ describe('Authorization matrix — member management', () => {
         mockFrom.mockReturnValueOnce({
           insert: vi.fn().mockResolvedValue({ error: null }),
         });
+        mockFrom.mockReturnValueOnce({
+          insert: vi.fn().mockResolvedValue({ error: null }),
+        });
       }
 
       const result = await addMember(PROJECT_ID, 'new-user-id', 'member', actor);

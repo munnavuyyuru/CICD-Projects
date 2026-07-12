@@ -38,13 +38,21 @@ const USER_ID = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
 const PROJECT_ID = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
 const TASK_ID = 'cccccccc-cccc-cccc-cccc-cccccccccccc';
 
-function mockOwnerCheck() {
+function mockMemberRole(role: string | null) {
   return {
     select: vi.fn().mockReturnValue({
       eq: vi.fn().mockReturnValue({
-        single: vi.fn().mockResolvedValue({ data: { owner_id: USER_ID }, error: null }),
+        eq: vi.fn().mockReturnValue({
+          maybeSingle: vi.fn().mockResolvedValue({ data: role ? { role } : null, error: null }),
+        }),
       }),
     }),
+  };
+}
+
+function mockActivityInsert() {
+  return {
+    insert: vi.fn().mockResolvedValue({ error: null }),
   };
 }
 
@@ -62,7 +70,7 @@ describe('GET /api/tasks/project/:projectId', () => {
       { id: TASK_ID, project_id: PROJECT_ID, title: 'Task A', description: null, status: 'todo', priority: 2, assignee_id: null, due_date: null, position: 1, created_at: '2024-01-01T00:00:00Z' },
     ];
     mockFrom
-      .mockReturnValueOnce(mockOwnerCheck())
+      .mockReturnValueOnce(mockMemberRole('owner'))
       .mockReturnValueOnce({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
@@ -89,7 +97,7 @@ describe('GET /api/tasks/:id', () => {
           }),
         }),
       })
-      .mockReturnValueOnce(mockOwnerCheck());
+      .mockReturnValueOnce(mockMemberRole('owner'));
 
     const res = await request(setupApp()).get(`/api/tasks/${TASK_ID}`).set('Authorization', `Bearer ${VALID_TOKEN}`);
 
@@ -116,7 +124,7 @@ describe('POST /api/tasks', () => {
   it('creates a task', async () => {
     const newTask = { id: TASK_ID, project_id: PROJECT_ID, title: 'New Task', description: null, status: 'todo', priority: 2, assignee_id: null, due_date: null, position: 1, created_at: '2024-01-01T00:00:00Z' };
     mockFrom
-      .mockReturnValueOnce(mockOwnerCheck())
+      .mockReturnValueOnce(mockMemberRole('owner'))
       .mockReturnValueOnce({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
@@ -132,7 +140,8 @@ describe('POST /api/tasks', () => {
             single: vi.fn().mockResolvedValue({ data: newTask, error: null }),
           }),
         }),
-      });
+      })
+      .mockReturnValueOnce(mockActivityInsert());
 
     const res = await request(setupApp())
       .post('/api/tasks')
@@ -174,7 +183,7 @@ describe('PATCH /api/tasks/:id', () => {
           }),
         }),
       })
-      .mockReturnValueOnce(mockOwnerCheck())
+      .mockReturnValueOnce(mockMemberRole('owner'))
       .mockReturnValueOnce({
         update: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
@@ -215,7 +224,7 @@ describe('DELETE /api/tasks/:id', () => {
           }),
         }),
       })
-      .mockReturnValueOnce(mockOwnerCheck())
+      .mockReturnValueOnce(mockMemberRole('owner'))
       .mockReturnValueOnce({
         delete: vi.fn().mockReturnValue({
           eq: vi.fn().mockResolvedValue({ error: null }),

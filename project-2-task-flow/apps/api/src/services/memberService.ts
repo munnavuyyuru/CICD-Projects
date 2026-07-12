@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
 import type { MemberRole } from '@taskflow/shared';
+import { logActivity } from './activityService';
 
 export interface MemberWithProfile {
   project_id: string;
@@ -81,6 +82,8 @@ export async function addMember(
   });
 
   if (error) return { success: false, error: error.message };
+
+  await logActivity(projectId, invitedBy, 'added', 'member', memberUserId, { role });
   return { success: true };
 }
 

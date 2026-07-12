@@ -1,28 +1,10 @@
 import { supabase } from '../lib/supabase';
 import type { Task } from '@taskflow/shared';
-
-async function isProjectMember(projectId: string, userId: string): Promise<boolean> {
-  const { data } = await supabase
-    .from('projects')
-    .select('owner_id')
-    .eq('id', projectId)
-    .single();
-
-  if (!data) return false;
-  if (data.owner_id === userId) return true;
-
-  const { data: member } = await supabase
-    .from('project_members')
-    .select('user_id')
-    .eq('project_id', projectId)
-    .eq('user_id', userId)
-    .maybeSingle();
-
-  return !!member;
-}
+import { getMemberRole } from './memberService';
+import { logActivity } from './activityService';
 
 export async function getTasks(projectId: string, userId: string): Promise<Task[]> {
-  if (!(await isProjectMember(projectId, userId))) return [];
+  if (!(await getMemberRole(projectId, userId))) return [];
 
   const { data } = await supabase
     .from('tasks')
@@ -42,8 +24,7 @@ export async function getTask(taskId: string, userId: string): Promise<Task | nu
 
   if (!data) return null;
 
-  const allowed = await isProjectMember(data.project_id, userId);
-  if (!allowed) return null;
+  if (!(await getMemberRole(data.project_id, userId))) return null;
 
   return data as Task;
 }
@@ -59,7 +40,7 @@ export async function createTask(
     due_date?: string;
   },
 ): Promise<Task | null> {
-  if (!(await isProjectMember(input.project_id, userId))) return null;
+  if (!(await getMemberRole(input.project_id, userId))) return null;
 
   const { data: maxPos } = await supabase
     .from('tasks')
@@ -83,6 +64,10 @@ export async function createTask(
     })
     .select()
     .single();
+
+  if (data) {
+    await logActivity(input.project_id, userId, 'created', 'task', data.id);
+  }
 
   return data as Task | null;
 }
@@ -108,8 +93,7 @@ export async function updateTask(
 
   if (!existing) return null;
 
-  const allowed = await isProjectMember(existing.project_id, userId);
-  if (!allowed) return null;
+  if (!(await getMemberRole(existing.project_id, userId))) return null;
 
   const { data } = await supabase
     .from('tasks')
@@ -130,8 +114,7 @@ export async function deleteTask(taskId: string, userId: string): Promise<boolea
 
   if (!existing) return false;
 
-  const allowed = await isProjectMember(existing.project_id, userId);
-  if (!allowed) return false;
+  if (!(await getMemberRole(existing.project_id, userId))) return false;
 
   const { error } = await supabase.from('tasks').delete().eq('id', taskId);
   return !error;

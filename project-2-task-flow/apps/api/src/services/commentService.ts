@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
 import { getMemberRole } from './memberService';
+import { logActivity } from './activityService';
 import type { PaginatedResponse } from '@taskflow/shared';
 
 export interface CommentWithAuthor {
@@ -84,6 +85,8 @@ export async function createComment(
     .single();
 
   if (error || !data) return null;
+
+  await logActivity(projectId, authorId, 'created', 'comment', data.id);
 
   return {
     id: data.id as string,
