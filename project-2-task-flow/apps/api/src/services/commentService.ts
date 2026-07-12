@@ -51,7 +51,7 @@ export async function getComments(
 
   const hasMore = data.length > limit;
   const items = hasMore ? data.slice(0, limit) : data;
-  const nextCursor = items.length > 0 ? items[items.length - 1].created_at : null;
+  const nextCursor = hasMore && items.length > 0 ? items[items.length - 1].created_at : null;
 
   return {
     data: items.map((row) => ({
