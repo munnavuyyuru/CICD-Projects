@@ -4,12 +4,21 @@ import { apiClient } from '../lib/api';
 import { useAuth } from '../hooks/useAuth';
 import { HexGrid } from '../components/ui/HexGrid';
 import { NeonCard } from '../components/ui/NeonCard';
-import type { Project, Task, MemberRole } from '@taskflow/shared';
+import type { Project, Task, MemberRole, PaginatedResponse } from '@taskflow/shared';
 
 interface MemberWithDisplayName {
   project_id: string;
   user_id: string;
   role: MemberRole;
+  created_at: string;
+  display_name: string;
+}
+
+interface CommentWithAuthor {
+  id: string;
+  task_id: string;
+  author_id: string;
+  content: string;
   created_at: string;
   display_name: string;
 }
@@ -45,6 +54,9 @@ export function ProjectDetailPage() {
   const [members, setMembers] = useState<MemberWithDisplayName[]>([]);
   const [newMemberId, setNewMemberId] = useState('');
   const [newMemberRole, setNewMemberRole] = useState<MemberRole>('member');
+  const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
+  const [taskComments, setTaskComments] = useState<Record<string, CommentWithAuthor[]>>({});
+  const [newCommentContent, setNewCommentContent] = useState('');
 
   const currentUserRole = members.find((m) => m.user_id === (user?.id ?? ''))?.role ?? null;
   const isOwner = currentUserRole === 'owner';
@@ -103,6 +115,51 @@ export function ProjectDetailPage() {
     try {
       await apiClient(`/api/tasks/${taskId}`, { method: 'DELETE' });
       setTasks((prev) => prev.filter((t) => t.id !== taskId));
+    } catch {
+      // ignore
+    }
+  };
+
+  const handleToggleComments = async (taskId: string) => {
+    if (expandedTaskId === taskId) {
+      setExpandedTaskId(null);
+      return;
+    }
+    setExpandedTaskId(taskId);
+
+    if (!taskComments[taskId]) {
+      try {
+        const result = await apiClient<PaginatedResponse<CommentWithAuthor>>(`/api/tasks/${taskId}/comments`);
+        setTaskComments((prev) => ({ ...prev, [taskId]: result.data }));
+      } catch {
+        setTaskComments((prev) => ({ ...prev, [taskId]: [] }));
+      }
+    }
+  };
+
+  const handleCreateComment = async (e: React.FormEvent, taskId: string) => {
+    e.preventDefault();
+    if (!newCommentContent.trim()) return;
+
+    try {
+      const comment = await apiClient<CommentWithAuthor>(`/api/tasks/${taskId}/comments`, {
+        method: 'POST',
+        body: JSON.stringify({ content: newCommentContent.trim() }),
+      });
+      setTaskComments((prev) => ({ ...prev, [taskId]: [...(prev[taskId] || []), comment] }));
+      setNewCommentContent('');
+    } catch {
+      // ignore
+    }
+  };
+
+  const handleDeleteComment = async (commentId: string, taskId: string) => {
+    try {
+      await apiClient(`/api/comments/${commentId}`, { method: 'DELETE' });
+      setTaskComments((prev) => ({
+        ...prev,
+        [taskId]: (prev[taskId] || []).filter((c) => c.id !== commentId),
+      }));
     } catch {
       // ignore
     }
@@ -242,40 +299,100 @@ export function ProjectDetailPage() {
 
         <div className="space-y-3">
           {tasks.map((task) => (
-            <NeonCard key={task.id} className="flex items-center gap-4">
-              <select
-                value={task.status}
-                onChange={(e) => handleStatusChange(task.id, e.target.value as TaskStatus)}
-                className={`bg-abyss border border-grid-line px-2 py-1 text-xs font-display tracking-wider uppercase outline-none cursor-pointer ${STATUS_COLORS[task.status]}`}
-              >
-                {Object.entries(STATUS_LABELS).map(([val, label]) => (
-                  <option key={val} value={val}>{label}</option>
-                ))}
-              </select>
-
-              <div className="flex-1 min-w-0">
-                <p className="text-neon-cyan text-sm truncate">{task.title}</p>
-                {task.description && (
-                  <p className="text-terminal-green text-xs opacity-40 truncate mt-0.5">{task.description}</p>
-                )}
-              </div>
-
-              <div className="flex items-center gap-3 shrink-0">
-                <span className={`text-xs font-display tracking-wider ${task.priority === 1 ? 'text-neon-magenta' : task.priority === 2 ? 'text-synthwave-orange' : 'text-grid-line'}`}>
-                  {PRIORITY_LABELS[task.priority]}
-                </span>
-                {task.due_date && (
-                  <span className="text-xs text-grid-line">{task.due_date}</span>
-                )}
-                <button
-                  onClick={() => handleDeleteTask(task.id)}
-                  className="text-xs text-neon-magenta hover:text-terminal-green transition-colors"
-                  title="Delete task"
+            <div key={task.id}>
+              <NeonCard className="flex items-center gap-4">
+                <select
+                  value={task.status}
+                  onChange={(e) => handleStatusChange(task.id, e.target.value as TaskStatus)}
+                  className={`bg-abyss border border-grid-line px-2 py-1 text-xs font-display tracking-wider uppercase outline-none cursor-pointer ${STATUS_COLORS[task.status]}`}
                 >
-                  [X]
-                </button>
-              </div>
-            </NeonCard>
+                  {Object.entries(STATUS_LABELS).map(([val, label]) => (
+                    <option key={val} value={val}>{label}</option>
+                  ))}
+                </select>
+
+                <div className="flex-1 min-w-0">
+                  <p className="text-neon-cyan text-sm truncate">{task.title}</p>
+                  {task.description && (
+                    <p className="text-terminal-green text-xs opacity-40 truncate mt-0.5">{task.description}</p>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-3 shrink-0">
+                  <button
+                    onClick={() => handleToggleComments(task.id)}
+                    className={`text-xs font-display tracking-wider transition-colors ${expandedTaskId === task.id ? 'text-neon-cyan' : 'text-grid-line hover:text-neon-cyan'}`}
+                    title="Toggle comments"
+                  >
+                    [{expandedTaskId === task.id ? '-' : '+'}]
+                  </button>
+                  <span className={`text-xs font-display tracking-wider ${task.priority === 1 ? 'text-neon-magenta' : task.priority === 2 ? 'text-synthwave-orange' : 'text-grid-line'}`}>
+                    {PRIORITY_LABELS[task.priority]}
+                  </span>
+                  {task.due_date && (
+                    <span className="text-xs text-grid-line">{task.due_date}</span>
+                  )}
+                  <button
+                    onClick={() => handleDeleteTask(task.id)}
+                    className="text-xs text-neon-magenta hover:text-terminal-green transition-colors"
+                    title="Delete task"
+                  >
+                    [X]
+                  </button>
+                </div>
+              </NeonCard>
+
+              {expandedTaskId === task.id && (
+                <div className="ml-8 mt-2 space-y-2 border-l border-grid-line pl-4">
+                  {(!taskComments[task.id] || taskComments[task.id].length === 0) && (
+                    <p className="text-grid-line text-xs tracking-wider">{'// NO_COMMENTS'}</p>
+                  )}
+
+                  {taskComments[task.id]?.map((comment) => (
+                    <div key={comment.id} className="flex items-start gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-neon-magenta font-display tracking-wider">
+                            {comment.display_name}
+                          </span>
+                          <span className="text-xs text-grid-line">
+                            {new Date(comment.created_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <p className="text-xs text-neon-cyan mt-1">{comment.content}</p>
+                      </div>
+                      {comment.author_id === user?.id && (
+                        <button
+                          onClick={() => handleDeleteComment(comment.id, task.id)}
+                          className="text-xs text-grid-line hover:text-neon-magenta transition-colors shrink-0"
+                          title="Delete comment"
+                        >
+                          [X]
+                        </button>
+                      )}
+                    </div>
+                  ))}
+
+                  <form onSubmit={(e) => handleCreateComment(e, task.id)} className="flex gap-2 pt-1">
+                    <input
+                      type="text"
+                      value={newCommentContent}
+                      onChange={(e) => setNewCommentContent(e.target.value)}
+                      maxLength={2000}
+                      placeholder="Add a comment..."
+                      className="flex-1 bg-abyss border border-grid-line px-3 py-2 text-neon-cyan text-xs outline-none transition-colors focus:border-neon-cyan placeholder:text-grid-line"
+                    />
+                    <button
+                      type="submit"
+                      disabled={!newCommentContent.trim()}
+                      className="text-xs text-neon-cyan font-display tracking-wider uppercase hover:text-terminal-green transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      &gt; SEND
+                    </button>
+                  </form>
+                </div>
+              )}
+            </div>
           ))}
         </div>
 
