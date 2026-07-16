@@ -3,7 +3,10 @@
   "compilerOptions": {
     "rootDir": "src",
     "outDir": "dist",
-    "types": ["vitest/globals"]
+    "types": ["vitest/globals"],
+    "esModuleInterop": true,
+    "moduleResolution": "node16",
+    "allowSyntheticDefaultImports": true
   },
   "references": [{ "path": "../../packages/shared" }],
   "include": ["src"]

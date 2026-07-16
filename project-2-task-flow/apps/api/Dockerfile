@@ -3,11 +3,17 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 COPY package*.json ./
+COPY tsconfig*.json ./
+COPY .prettierrc ./
+COPY eslint.config.mjs ./
+
+
 COPY packages/shared ./packages/shared
 COPY apps/api ./apps/api
 
 RUN npm ci --workspaces --include-workspace-root
 
+RUN npm run build -w packages/shared
 RUN npm run build -w apps/api
 
 
