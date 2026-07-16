@@ -8,8 +8,9 @@ COPY apps/web ./apps/web
 
 RUN npm ci --workspaces --include-workspace-root
 
-RUN npm run build -w apps/web
+RUN npm run typecheck
 
+RUN npm run build -w apps/web
 
 FROM nginx:alpine AS runner
 
