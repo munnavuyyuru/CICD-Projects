@@ -3,6 +3,10 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 COPY package*.json ./
+COPY tsconfig*.json ./
+COPY apps/api/tsconfig.json ./apps/api/tsconfig.json
+COPY apps/web/tsconfig.json ./apps/web/tsconfig.json
+COPY packages/shared/tsconfig.json ./packages/shared/tsconfig.json
 COPY packages/shared ./packages/shared
 COPY apps/web ./apps/web
 

@@ -5,6 +5,7 @@
     "outDir": "dist",
     "types": ["vitest/globals"],
     "esModuleInterop": true,
+    "module": "Node16",
     "moduleResolution": "node16",
     "allowSyntheticDefaultImports": true
   },
