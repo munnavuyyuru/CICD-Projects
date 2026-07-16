@@ -16,3 +16,5 @@ test-results
 *.tsbuildinfo
 verify.sql
 TaskFlow_ Production App with Agents — Full End-to-End Guide.md
+decision.md
+task.md
