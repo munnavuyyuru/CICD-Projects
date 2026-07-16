@@ -5,8 +5,8 @@
     "outDir": "dist",
     "types": ["vitest/globals"],
     "esModuleInterop": true,
-    "module": "Node16",
-    "moduleResolution": "node16",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
     "allowSyntheticDefaultImports": true
   },
   "references": [{ "path": "../../packages/shared" }],
