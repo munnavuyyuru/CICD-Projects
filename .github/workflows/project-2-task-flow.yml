@@ -42,3 +42,15 @@ jobs:
           cache-dependency-path: project-2-task-flow/package-lock.json
       - run: npm ci
       - run: npm test
+
+  gitleaks:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
