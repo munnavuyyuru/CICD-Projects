@@ -8,17 +8,10 @@ services:
     ports:
       - "4000:4000"
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=production
       - SUPABASE_URL=${SUPABASE_URL}
       - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
       - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
-      - VITE_API_URL=http://localhost:4000
-    volumes:
-      - ./apps/api:/app/apps/api
-      - ./packages/shared:/app/packages/shared
-    depends_on:
-      - supabase
-    command: npm run dev -w apps/api
 
   web:
     build:
@@ -30,23 +23,5 @@ services:
       - VITE_API_URL=http://localhost:4000
       - VITE_SUPABASE_URL=${SUPABASE_URL}
       - VITE_SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
-    volumes:
-      - ./apps/web:/app/apps/web
-      - ./packages/shared:/app/packages/shared
     depends_on:
       - api
-    command: npm run dev -w apps/web
-
-  supabase:
-    image: supabase/postgres:15.1.0.117
-    environment:
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=postgres
-    ports:
-      - "5432:5432"
-    volumes:
-      - supabase_data:/var/lib/postgresql/data
-      - ./supabase/migrations:/docker-entrypoint-initdb.d
-
-volumes:
-  supabase_data:
