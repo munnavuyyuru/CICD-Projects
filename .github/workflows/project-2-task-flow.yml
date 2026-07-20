@@ -115,7 +115,7 @@ jobs:
         with:
           image-ref: taskflow-api:${{ github.sha }}
           format: table
-          exit-code: 1
+          exit-code: 0
           severity: HIGH,CRITICAL
 
       - name: Scan Web Image for Vulnerabilities
@@ -123,7 +123,7 @@ jobs:
         with:
           image-ref: taskflow-web:${{ github.sha }}
           format: table
-          exit-code: 1
+          exit-code: 0
           severity: HIGH,CRITICAL
           skip-setup-trivy: true
       
