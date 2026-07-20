@@ -104,4 +104,26 @@ jobs:
              VITE_API_URL=http://localhost:4000
              VITE_SUPABASE_URL=${{ secrets.SUPABASE_URL }}
              VITE_SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
+
+  trivy:
+    needs: docker-build
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+      - name: Scan API Image for Vulnerabilities
+        uses: aquasecurity/trivy-action@v0.35.0
+        with:
+          image-ref: taskflow-api:${{ github.sha }}
+          format: table
+          exit-code: 1
+          severity: HIGH,CRITICAL
+
+      - name: Scan Web Image for Vulnerabilities
+        uses: aquasecurity/trivy-action@v0.35.0
+        with:
+          image-ref: taskflow-web:${{ github.sha }}
+          format: table
+          exit-code: 1
+          severity: HIGH,CRITICAL
+          skip-setup-trivy: true
       
