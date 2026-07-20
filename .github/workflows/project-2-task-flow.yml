@@ -24,8 +24,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
-          cache: "npm"
-          cache-dependency-path: project-2-task-flow/package-lock.json
+          # cache: "npm"
+          # cache-dependency-path: project-2-task-flow/package-lock.json
       - run: npm ci
       - run: npm run typecheck
       - run: npm run lint
@@ -38,8 +38,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
-          cache: "npm"
-          cache-dependency-path: project-2-task-flow/package-lock.json
+          # cache: "npm"
+          # cache-dependency-path: project-2-task-flow/package-lock.json
       - run: npm ci
       - run: npm test
 
