@@ -136,18 +136,18 @@ jobs:
        - name: Log in to Docker Hub
          uses: docker/login-action@v3
          with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+           username: ${{ secrets.DOCKER_USERNAME }}
+           password: ${{ secrets.DOCKER_PASSWORD }}
        - name: Tag & Push API
-          run: |
+         run: |
            docker tag taskflow-api:${{ github.sha }} \
              ${{ secrets.DOCKER_USERNAME }}/taskflow-api:${{ inputs.version }}
            docker push ${{ secrets.DOCKER_USERNAME }}/taskflow-api:${{ inputs.version }}
            docker tag taskflow-api:${{ github.sha }} \
              ${{ secrets.DOCKER_USERNAME }}/taskflow-api:latest
            docker push ${{ secrets.DOCKER_USERNAME }}/taskflow-api:latest
-        - name: Tag & Push Web
-          run: |
+       - name: Tag & Push Web
+         run: |
            docker tag taskflow-web:${{ github.sha }} \
              ${{ secrets.DOCKER_USERNAME }}/taskflow-web:${{ inputs.version }}
            docker push ${{ secrets.DOCKER_USERNAME }}/taskflow-web:${{ inputs.version }}
