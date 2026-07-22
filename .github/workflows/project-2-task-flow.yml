@@ -21,6 +21,10 @@ defaults:
   run:
     working-directory: project-2-task-flow
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   build:
     runs-on: self-hosted
