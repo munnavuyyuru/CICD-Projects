@@ -173,12 +173,12 @@ jobs:
       - run: aws eks update-kubeconfig --name taskflow-cluster --region ${{ secrets.AWS_REGION }}
       - name: Create/Update Supabase secret
         run: |
+          kubectl delete secret supabase-secret -n taskflow --ignore-not-found
           kubectl create secret generic supabase-secret \
             -n taskflow \
             --from-literal=supabase-url=${{ secrets.SUPABASE_URL }} \
             --from-literal=supabase-service-role-key=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }} \
-            --from-literal=supabase-anon-key=${{ secrets.SUPABASE_ANON_KEY }} \
-            --dry-run=client -o yaml | kubectl apply -f -
+            --from-literal=supabase-anon-key=${{ secrets.SUPABASE_ANON_KEY }}
       - name: Apply k8s manifests
         run: kubectl apply -f project-2-task-flow/k8s/
       - name: Update API image
