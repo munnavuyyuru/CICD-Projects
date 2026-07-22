@@ -180,7 +180,7 @@ jobs:
             --from-literal=supabase-anon-key="${{ secrets.SUPABASE_ANON_KEY }}" \
             --dry-run=client -o yaml | kubectl apply -f -
       - name: Apply k8s manifests
-        run: kubectl apply -f project-2-task-flow/k8s/
+        run: kubectl apply -f k8s/
       - name: Update API image
         run: |
           kubectl set image deployment/api api=${{ secrets.DOCKER_USERNAME }}/taskflow-api:${{ inputs.version }} -n taskflow
