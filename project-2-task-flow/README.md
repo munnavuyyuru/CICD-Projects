@@ -21,13 +21,12 @@
 1. Overview
 2. Architecture
 3. CI/CD Pipeline
-4. Prerequisites
-5. Quick Start (Create)
-6. Destroy (Clean Up)
-7. Cost Reference
-8. Tech Stack
-9. Resolved Issues
-10. License
+4. Setup Guide
+5. Destroy (Clean Up)
+6. Cost Reference
+7. Tech Stack
+8. Resolved Issues
+9. License
 
 ---
 
@@ -158,55 +157,137 @@ Triggers:
 
 ---
 
-## Prerequisites
+## Setup Guide
 
-Local Machine (for cluster setup):
-- Node 24+
-- Docker
-- AWS CLI v2
-- eksctl
-- kubectl
-- Helm v3
-- Docker Hub account (username: bhargav072)
-
-AWS Resources:
-- EKS cluster: taskflow-cluster (ap-south-1)
-- OIDC IAM role: github-actions-eks-role with AmazonEKSClusterPolicy and inline eks:DescribeCluster + eks:AccessKubernetesApi
-- EKS access entry for the OIDC role with AmazonEKSClusterAdminPolicy
-
-Self-Hosted Runner (Ubuntu VM):
-- Registered in GitHub -> Settings -> Actions -> Runners
-- Installed: AWS CLI v2, kubectl, Docker
-- Docker access without sudo
-
-External Services:
-- Supabase Cloud project (URL + anon key + service role key)
-- SonarQube Community (Docker container on separate VM)
-- Docker Hub access token
+This guide covers the complete infrastructure setup in three parts:
+1. GitHub Runner VM (the machine that runs CI/CD jobs)
+2. SonarQube VM (code quality server)
+3. EKS cluster and application deployment
 
 ---
 
-## Quick Start (Create)
+### 1. GitHub Runner VM Setup
 
-### Step 1: Create EKS Cluster
+Launch an Ubuntu 22.04 VM (t3.medium or larger) with a security group allowing ports 22 and 3000-10000.
+
+**Step 1.1 -- Install Docker**
+
+```bash
+sudo apt update && sudo apt install -y docker.io
+sudo systemctl enable docker
+sudo usermod -aG docker ubuntu
+newgrp docker
+docker --version
+```
+
+**Step 1.2 -- Install AWS CLI v2**
+
+```bash
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip awscliv2.zip
+sudo ./aws/install
+rm -rf aws awscliv2.zip
+aws --version
+```
+
+**Step 1.3 -- Install kubectl**
+
+```bash
+curl -O https://dl.k8s.io/release/v1.30.0/bin/linux/amd64/kubectl
+chmod +x kubectl
+sudo mv kubectl /usr/local/bin/
+kubectl version --client
+```
+
+**Step 1.4 -- Register GitHub Self-Hosted Runner**
+
+Go to GitHub repo -> Settings -> Actions -> Runners -> New runner -> Linux. Copy the token from the page.
+
+```bash
+mkdir actions-runner && cd actions-runner
+curl -o actions-runner-linux-x64-2.322.0.tar.gz -L \
+  https://github.com/actions/runner/releases/download/v2.322.0/actions-runner-linux-x64-2.322.0.tar.gz
+tar xzf actions-runner-linux-x64-2.322.0.tar.gz
+./config.sh --url https://github.com/munnavuyyuru/CICD-Projects --token <TOKEN_FROM_GITHUB>
+sudo ./svc.sh install
+sudo ./svc.sh start
+```
+
+**Step 1.5 -- Verify Runner is Online**
+
+GitHub repo -> Settings -> Actions -> Runners -> the runner should show a green "Idle" status.
+
+---
+
+### 2. SonarQube Setup
+
+Launch a second Ubuntu VM (t3.medium) with a security group allowing port 9000 from the runner VM IP.
+
+**Step 2.1 -- Run SonarQube Container**
+
+```bash
+docker run -d --name sonarqube \
+  -p 9000:9000 \
+  -e SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true \
+  sonarqube:community
+```
+
+**Step 2.2 -- Verify SonarQube is Running**
+
+```bash
+docker logs sonarqube -f
+```
+
+Wait until you see "SonarQube is operational" in the logs.
+
+```bash
+curl http://localhost:9000
+```
+
+**Step 2.3 -- Create Project and Token**
+
+1. Open `http://<sonar_ip>:9000` in a browser.
+2. Log in with default credentials: admin / admin.
+3. Change the password when prompted.
+4. Create a new project named `taskflow`.
+5. Generate a token (name it `taskflow-token`) and copy the token value.
+
+**Step 2.4 -- Add GitHub Secrets**
+
+Go to GitHub repo -> Settings -> Secrets and variables -> Actions and add these secrets:
+
+| Secret Name | Value |
+|-------------|-------|
+| `SONAR_TOKEN` | The token generated in step 2.3 |
+| `SONAR_HOST_URL` | `http://<sonar_ip>:9000` |
+
+---
+
+### 3. EKS and Kubernetes Setup
+
+Run these commands from your local machine (where eksctl, kubectl, and Helm are installed).
+
+**Step 3.1 -- Create EKS Cluster**
 
 ```bash
 eksctl create cluster --name taskflow-cluster --region ap-south-1 \
   --nodegroup-name standard-workers --node-type t3.medium --nodes 2 --managed
 ```
 
-### Step 2: Setup Kubernetes Namespace and Secrets
+This takes 15-20 minutes.
+
+**Step 3.2 -- Create Namespace and Supabase Secret**
 
 ```bash
 kubectl create ns taskflow
 
 kubectl create secret generic supabase-secret -n taskflow \
   --from-literal=supabase-url=https://njeyfigatkewnmcbkajg.supabase.co \
-  --from-literal=supabase-service-role-key=<service-role-key> \
-  --from-literal=supabase-anon-key=<anon-key>
+  --from-literal=supabase-service-role-key=<SUPABASE_SERVICE_ROLE_KEY> \
+  --from-literal=supabase-anon-key=<SUPABASE_ANON_KEY>
 ```
 
-### Step 3: Install nginx-ingress Controller
+**Step 3.3 -- Install nginx-ingress Controller**
 
 ```bash
 helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
@@ -214,13 +295,13 @@ helm install ingress-nginx ingress-nginx/ingress-nginx \
   --namespace ingress-nginx --create-namespace
 ```
 
-### Step 4: Deploy Application
+**Step 3.4 -- Deploy Application to EKS**
 
 ```bash
 kubectl apply -f k8s/
 ```
 
-### Step 5: Verify Deployment
+**Step 3.5 -- Verify Deployment**
 
 ```bash
 kubectl get pods -n taskflow
@@ -229,11 +310,12 @@ kubectl get svc -n ingress-nginx ingress-nginx-controller \
   -o jsonpath="{.status.loadBalancer.ingress[0].hostname}"
 ```
 
-### Step 6: Trigger Pipeline Release
+**Step 3.6 -- Trigger Pipeline Release**
 
-Go to GitHub UI -> Actions -> Task Flow -> Run workflow -> enter version (e.g., v1.1, v1.2).
+Go to GitHub UI -> Actions -> Task Flow -> Run workflow -> enter a version tag (e.g., v1).
 
-The pipeline runs all 8 stages automatically and deploys to EKS.
+The pipeline runs all 8 stages automatically:
+build -> test -> gitleaks -> sonarqube -> docker-build -> trivy -> push-to-dockerhub -> deploy-to-eks
 
 ---
 
