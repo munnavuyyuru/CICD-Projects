@@ -124,20 +124,8 @@ Data Flow:
 
 ## CI/CD Pipeline
 
-```mermaid
-graph LR
-    A[git push] --> B[build]
-    B --> C[test]
-    C --> D[gitleaks]
-    D --> E[sonarqube]
-    E --> F[docker-build]
-    F --> G[trivy]
-    G --> H[push-dockerhub]
-    H --> I[deploy-to-eks]
+<img width="1329" height="454" alt="image" src="https://github.com/user-attachments/assets/52b8531c-46e1-4338-9395-63dce5f8a25c" />
 
-    style A fill:#e1f5fe,stroke:#0288d1
-    style I fill:#c8e6c9,stroke:#388e3c
-```
 
 | Stage | Job | Tool/Action | Purpose |
 |-------|-----|-------------|---------|
